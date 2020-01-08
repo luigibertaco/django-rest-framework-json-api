@@ -1,6 +1,6 @@
 import inflection
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.query import QuerySet
+from django.db.models import Manager, QuerySet
 from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ParseError
 from rest_framework.serializers import *  # noqa: F403
@@ -206,6 +206,12 @@ class ModelSerializer(IncludedResourcesValidationMixin, SparseFieldsetsMixin, Mo
                 return OrderedDict([('type', resource_type), ('id', attribute)])
 
         attribute = field.get_attribute(instance)
+
+        # When creating the relationships list, we don't need all data from
+        # related models.
+        if isinstance(attribute, (Manager, QuerySet)) and 1:
+            if not getattr(attribute, "_prefetch_done", True):
+                attribute = attribute.only("pk")
 
         # We skip `to_representation` for `None` values so that fields do
         # not have to explicitly deal with that case.
